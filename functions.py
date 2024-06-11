@@ -31,6 +31,8 @@ dic = pyphen.Pyphen(lang='ro_RO')
 # Desparte textul in fraze
 def split_phases(text):
     phases = []
+    text = text.replace("\n", " ")
+    text = text.replace("-", " ")
     one_phase = ''
     len_text = len(text)
     skip = 0
@@ -73,11 +75,11 @@ def create_dic ():
     Lines = file1.readlines()
  
     count = 0
-    # Strips the newline character
+
     for line in Lines:
         count += 1
         line = line.strip()
-        # Desparte linia în funcție de tabulator (\t)
+
         words = line.split("\t")
 
         if words[0] in dictionary.keys():
@@ -86,26 +88,29 @@ def create_dic ():
             dictionary[words[0]] = {words[2][0] : [words[3].replace(".","-"), words[4]]}
 
 def accentuate(syllables):
-    if len(syllables) < 2:
-        syllable = syllables[0]
-        for i, char in enumerate(syllable):
+    syllables_copy = syllables.copy()
+    if len(syllables_copy) < 2:
+        syllable_copy = syllables_copy[0]
+        for i, char in enumerate(syllable_copy):
             if char in VOWELS:
-                syllables[0] = syllable[:i+1] + "'" + syllable[i+1:]
+                syllables_copy[0] = syllable_copy[:i+1] + "'" + syllable_copy[i+1:]
                 break
-        return ''.join(syllables)
+        return ''.join(syllables_copy)
     
-    penultimate_syllable = syllables[-2]
+    penultimate_syllable = syllables_copy[-2]
     for i, char in enumerate(penultimate_syllable):
         if char in VOWELS:
-            syllables[-2] = penultimate_syllable[:i+1] + "'" + penultimate_syllable[i+1:]
+            syllables_copy[-2] = penultimate_syllable[:i+1] + "'" + penultimate_syllable[i+1:]
             break
     
-    return ''.join(syllables)
+    return ''.join(syllables_copy)
 
 def process_word(word):
     syllables = dic.inserted(word)
+    syllables = syllables.split("-")
+
     accented_word = accentuate(syllables)
-    
+
     return (syllables, accented_word)
 
 # Functie de despartire in silabe si determinare silaba accentuata
@@ -147,12 +152,12 @@ def syllable_split_and_accent(fragments) :
 
                     syll = dictionary[current_token][key][0]
                     syll = syll.split("-")
-
-                    paragraf_syll.append(syll)
-
                     accent = dictionary[current_token][key][1]
                 else:
                     syll, accent = process_word(current_token)
+                    
+                
+                paragraf_syll.append(syll)
 
                 if token.text in PRON_REFLEXIV:
                     paragraf_accent.append(0)
@@ -222,6 +227,7 @@ def vasile_vasile(text):
     
 def solomon_marcus(text):
     fragments = split_phases(text)
+
     create_dic()
     global nlp
 
@@ -277,24 +283,103 @@ def solomon_marcus(text):
     
     return output_text
 
-def mihai_dinu(text):
-    fragments = text.split("\n")
-    create_dic()
-    global nlp
+def process_lists(lists):
+    result = []
+    
+    for sublist in lists:
+        if not sublist:  # Elimina listele nule
+            continue
+        
+        new_sublist = []
+        temp_list = []
+        for item in sublist:
+            if item == 0:
+                temp_list.append(0)
+            elif item == 1:
+                temp_list.append(1)
+                if temp_list:
+                    new_sublist.append(temp_list)
+                temp_list = []
+        
+        if temp_list:  # Adaugă ultimul element dacă este 0
+            new_sublist[-1].extend(temp_list)
+        
+        result.append(new_sublist)
+    
+    return result
 
-    nlp = spacy.load("ro_core_news_sm")
+# def mihai_dinu(text):
+#     fragments = text.split("\n")
+#     create_dic()
+#     global nlp
 
-    silabe, accent, len_phases, words_with_accent = syllable_split_and_accent(fragments)
+#     nlp = spacy.load("ro_core_news_sm")
 
+#     silabe, accent, len_phases, words_with_accent = syllable_split_and_accent(fragments)
+
+#     all_phase_accent = []
+    
+#     for i in range(0, len(silabe)):
+#         accent_index = 0
+#         phase_accents = []
+#         for word in silabe[i]:
+#             word_accents = []
+#             for syllable in word:
+#                 if syllable not in PUNCTUATION_MARKS:
+#                     word_accents.append(accent[i][accent_index])
+#                     accent_index += 1
+#             phase_accents.append(word_accents)
+#         all_phase_accent.append(phase_accents)
+
+#     units_syll = []
+#     units_accent = []
+#     # print(all_phase_accent)
+
+#     for i in range(0, len(words_with_accent)):
+#         syll_one_phase = []
+#         accent_one_phase = []
+#         syll_one_unit = []
+#         accent_one_unit = []
+#         for words_accent, word_syll, word_syll_acc in zip(words_with_accent[i], silabe[i], all_phase_accent[i]):
+
+#             if len(words_accent) == 0:
+#                 continue
+
+#             if words_accent[0] == 1:
+#                 syll_one_unit.append(word_syll)
+#                 syll_one_phase.append(syll_one_unit)
+#                 syll_one_unit = []
+
+#                 accent_one_unit.append(word_syll_acc)
+#                 accent_one_phase.append(accent_one_unit)
+#                 accent_one_unit = []
+#             else:
+#                 syll_one_unit.append(word_syll)
+
+#                 accent_one_unit.append(word_syll_acc)
+        
+#         units_syll.append(syll_one_phase)
+#         units_accent.append(accent_one_phase)
+
+    # print(units_syll)
+    # print(units_accent)
+
+
+
+
+
+            
+    
+        
     
 
 
 
 
 
-#solomon_marcus("Adormite păsărele pe, la cuiburi se adună. Seara pe deal buciumul sună cu jale.")
+#solomon_marcus("Adormite păsărele pe, la cuiburi se adună.\nSeara pe deal buciumul sună cu jale.")
 #text = "Adormind de armonia\nCodrului bătut de gânduri."
-#groups_vowels = vasile_vasile(text)
+#groups_vowels = mihai_dinu(text)
 
 # print(groups_vowels)
 

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from functions import solomon_marcus, vasile_vasile
-
 input_file_path = None
 
 def open_file():
@@ -57,6 +56,9 @@ solomon_button.pack()
 
 vasile_button = tk.Button(window, text="Vasile Vasile", command=lambda: process_text_or_file(vasile_vasile))
 vasile_button.pack()
+
+# mihai_button = tk.Button(window, text="Mihai Dinu", command=lambda: process_text_or_file(mihai_dinu))
+# mihai_button.pack()
 
 
 window.mainloop()
