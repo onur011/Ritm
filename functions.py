@@ -1,5 +1,4 @@
 import spacy
-import re
 import pyphen
 
 mapping_dict = {
@@ -23,11 +22,16 @@ mapping_dict = {
 }
 PRON_REFLEXIV = ["mă", "te", "se", "ne", "vă"]
 VOWELS = ['a', 'ă', 'â', 'e','î', 'i', 'o', 'u', 'A', 'Ă', 'Â', 'E', 'I','Î', 'O', 'U']
-PUNCTUATION_MARKS = ['.', ',', '!', '?', ':', ';' , '-', '(', ')', '[', ']', '{', '}', "'", '"', '...', '“', '”', '/', '\\', '|', '_', '@', '#', '$', '%', '^', '&', '*', '~', '`', '<', '>', '=']
+PUNCTUATION_MARKS = ['.', ',', '!', '?', ':', ';' , '-', '(', ')', '[', ']', '{', '}', "'", 
+                     '"', '...', '“', '”', '/', '\\', '|', '_', '@', '#', '$', '%', '^', '&', 
+                     '*', '~', '`', '<', '>', '=']
 CONJ_SUB = ["să", "că", "dacă", "deși", "când", "cum", "ca", "pentru", "fie", "atât","încât"]
-CONSONANTS = ['ț', 'ș', 'Ț', 'Ș','b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z']
+CONSONANTS = ['ț', 'ș', 'Ț', 'Ș','b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 
+              'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 
+              'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z']
 SO_O_VOWELS = ['a', 'o', 'ă', 'e']
 CLOSE_VOWELS = ['â', 'i', 'u', 'î']
+AUXILIAR = ['am', 'ai', 'a', 'am', 'ați','au', 'aș', 'voi', 'vei', 'va', 'vom', 'veți', 'vor' ]
 dictionary = {}
 dic = pyphen.Pyphen(lang='ro_RO')
 
@@ -159,7 +163,7 @@ def syllable_split_and_accent(fragments) :
             if current_token.endswith('-') and len(current_token) > 1:
                 current_token = current_token[:-1]
 
-            if token.pos_ not in ['PUNCT', 'SYM', 'X']:
+            if token.pos_ not in ['PUNCT', 'SYM', 'X'] and not token.text.isnumeric():
                 len_phas += 1
                 syll = None
                 accent = None
@@ -180,11 +184,11 @@ def syllable_split_and_accent(fragments) :
                     
                 paragraf_syll.append(syll)
 
-                if current_token in PRON_REFLEXIV or current_token in CONJ_SUB:
+                if current_token in PRON_REFLEXIV or current_token in CONJ_SUB or current_token in AUXILIAR:
                     for _ in syll:
                         paragraf_accent.append(0)
                     words_with_accent.append(0)
-                elif "'" in accent and token.pos_ not in ['DET', 'CONJ', "CCONJ", "SCONJ", "ADP", "PRON"]:
+                elif "'" in accent and token.pos_ not in ['CONJ', "CCONJ", "SCONJ", "ADP", "PRON"]:
                     index_accent = accent.index("'")
                     count_ch = 0
                     is_found = False
@@ -198,7 +202,7 @@ def syllable_split_and_accent(fragments) :
                     words_with_accent.append(1)
                             
 
-                elif token.pos_ not in ['DET', 'CONJ', "CCONJ", "SCONJ", "ADP", "PRON"]:
+                elif token.pos_ not in ['CONJ', "CCONJ", "SCONJ", "ADP", "PRON"]:
                     paragraf_accent.append(1)
                     words_with_accent.append(1)
                 else:
@@ -300,8 +304,9 @@ def solomon_marcus(text, choice):
         fragments = split_phases(text)
 
     create_dic()
-    global nlp
 
+    global nlp
+    dic
     nlp = spacy.load("ro_core_news_sm")
 
     silabe, accent, len_phases, words_with_accent = syllable_split_and_accent(fragments)
@@ -327,6 +332,7 @@ def solomon_marcus(text, choice):
     rhythmic_diameters = [a - b for a, b in zip(superior_rhythmic_borders, lower_rhythmic_borders)]
     rhythmic_indices = search_rhytmic_indices(len_phases, len_phi)
 
+    len_phases_freq = calculate_frequencies(len_phases)
     len_phi_freq = calculate_frequencies(len_phi)
     rhythmic_indices_freq = calculate_frequencies(rhythmic_indices)
     lower_rhythmic_borders_freq = calculate_frequencies(lower_rhythmic_borders)
@@ -351,17 +357,20 @@ def solomon_marcus(text, choice):
 
         output_text += "\n"
         output_text += ("Structura ritmică = <" + ", ".join(map(str, rhythmic_structure[i])) + ">\n")
+        output_text += ("Lungimea = " + str(len_phases[i]) + "\n")
         output_text += ("Lungimea ritmică = " + str(len_phi[i]) + "\n")
         output_text += ("Indicele ritmic = " + str(rhythmic_indices[i]) + "\n")
         output_text += ("Marginea ritmică inferioară = " + str(lower_rhythmic_borders[i]) + "\n")
         output_text += ("Marginea ritmică superioară = " + str(superior_rhythmic_borders[i]) + "\n")
         output_text += ("Diametrul ritmic = " + str(rhythmic_diameters[i]) + "\n\n")
 
+    output_text += ("Diametrul ritmic al limbajului = " + str(max(rhythmic_indices)) + "\n")
     output_text += ("Marginea inferioară a limbajului = " + str(min(lower_rhythmic_borders)) + "\n")
     output_text += ("Marginea superioară a limbajului = " + str(max(superior_rhythmic_borders)) + "\n")
     output_text += ("Diametrul ritmic al limbajului = " + str(max(rhythmic_diameters)) + "\n")
     output_text += ("Dimensiunea ritmică a limbajului = " + str(max(superior_rhythmic_borders) - min(lower_rhythmic_borders)) + "\n\n")
 
+    output_text += (format_frequencies("Frecvență lungime", len_phases_freq) + "\n")
     output_text += (format_frequencies("Frecvență lungime ritmică", len_phi_freq) + "\n")
     output_text += (format_frequencies("Frecvență indice ritmic", rhythmic_indices_freq) + "\n")
     output_text += (format_frequencies("Frecvență margine ritmică inferioară", lower_rhythmic_borders_freq) + "\n")
@@ -550,32 +559,3 @@ def mihai_dinu(text, choice):
     output += format_frequencies("Frecvență vers", create_dic_perc(verse_type_freq))
 
     return output
-
-
-
-
-
-            
-    
-        
-    
-
-
-
-
-
-#solomon_marcus("Adormite păsărele pe, la cuiburi se adună.\nSeara pe deal buciumul sună cu jale.")
-#text = "Adormind de armonia\nCodrului bătut de gânduri."
-#groups_vowels = mihai_dinu(text)
-
-# print(groups_vowels)
-
-
-
-        
-
-
-
-
-
-
