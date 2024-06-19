@@ -3,7 +3,7 @@ Comenzi instalare biblioteci:
     pip3 install -U pip setuptools wheel
     pip3 install -U spacy
     python3 -m spacy download ro_core_news_sm
-    pip3 install pyhyphen
+    pip3 install pyphen
 
     Se poate utiliza si comanda pip
 
