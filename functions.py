@@ -24,7 +24,7 @@ PRON_REFLEXIV = ["mă", "te", "se", "ne", "vă"]
 VOWELS = ['a', 'ă', 'â', 'e','î', 'i', 'o', 'u', 'A', 'Ă', 'Â', 'E', 'I','Î', 'O', 'U']
 PUNCTUATION_MARKS = ['.', ',', '!', '?', ':', ';' , '-', '(', ')', '[', ']', '{', '}', "'", 
                      '"', '...', '“', '”', '/', '\\', '|', '_', '@', '#', '$', '%', '^', '&', 
-                     '*', '~', '`', '<', '>', '=']
+                     '*', '~', '`', '<', '>', '=','„']
 CONJ_SUB = ["să", "că", "dacă", "deși", "când", "cum", "ca", "pentru", "fie", "atât","încât"]
 CONSONANTS = ['ț', 'ș', 'Ț', 'Ș','b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 
               'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 
@@ -61,7 +61,7 @@ def split_phases(text):
         if (i < len_text - 2) and (text[i] == '.') and (text[i+1] == '.') and (text[i+2] == '.'):
             skip = 2
         # Frazele sunt despartite in functie de punct, semnul intrebarii si semnul exclamarii
-        elif (text[i] == '.') or (text[i] == '?') or (text[i] == '!')or (text[i] == '\n'):
+        elif (text[i] == '.') or (text[i] == '?') or (text[i] == '!'):
             if one_phase.endswith('-'):
                 one_phase = one_phase[:-1]
             phases.append(one_phase)
@@ -110,12 +110,15 @@ def update_freq(frequency_dict, element):
 
 def accentuate(syllables):
     syllables_copy = syllables.copy()
+    
     if len(syllables_copy) < 2:
         syllable_copy = syllables_copy[0]
         for i, char in enumerate(syllable_copy):
             if char in VOWELS:
                 syllables_copy[0] = syllable_copy[:i] + "'" + syllable_copy[i:]
                 break
+        else:
+            syllables_copy[0] = "'" + syllable_copy
         return ''.join(syllables_copy)
     
     penultimate_syllable = syllables_copy[-2]
@@ -123,6 +126,8 @@ def accentuate(syllables):
         if char in VOWELS:
             syllables_copy[-2] = penultimate_syllable[:i] + "'" + penultimate_syllable[i:]
             break
+    else:
+        syllables_copy[-2] = "'" + penultimate_syllable
     
     return ''.join(syllables_copy)
 
@@ -145,6 +150,7 @@ def syllable_split_and_accent(fragments) :
     all_phases_accent = []
     all_phases_len = []
     all_words_with_accent = []
+    i = 0
     for paragraf in fragments:
         doc = nlp(paragraf)
         # Iterați peste fiecare cuvânt din paragraf și afișați partea de vorbire a fiecărui cuvânt
@@ -163,7 +169,7 @@ def syllable_split_and_accent(fragments) :
             if current_token.endswith('-') and len(current_token) > 1:
                 current_token = current_token[:-1]
 
-            if token.pos_ not in ['PUNCT', 'SYM', 'X'] and not token.text.isnumeric():
+            if token.pos_ not in ['PUNCT', 'SYM'] and not token.text.isnumeric():
                 len_phas += 1
                 syll = None
                 accent = None
@@ -171,7 +177,7 @@ def syllable_split_and_accent(fragments) :
                 if current_token in dictionary:
 
                     key = None
-                    if mapping_dict[token.pos_] in dictionary[current_token]:
+                    if token.pos_ != '' and mapping_dict[token.pos_] in dictionary[current_token]:
                         key = mapping_dict[token.pos_]
                     else:
                         key = list(dictionary[current_token].keys())[0]
@@ -218,6 +224,7 @@ def syllable_split_and_accent(fragments) :
         all_phases_syll.append(paragraf_syll)
         all_phases_accent.append(paragraf_accent)
         all_phases_len.append(len_phas)
+        i = i + 1
     return (all_phases_syll, all_phases_accent, all_phases_len, all_words_with_accent)
 
 def calculate_frequencies(lst): 
@@ -364,7 +371,7 @@ def solomon_marcus(text, choice):
         output_text += ("Marginea ritmică superioară = " + str(superior_rhythmic_borders[i]) + "\n")
         output_text += ("Diametrul ritmic = " + str(rhythmic_diameters[i]) + "\n\n")
 
-    output_text += ("Diametrul ritmic al limbajului = " + str(max(rhythmic_indices)) + "\n")
+    output_text += ("Indicele ritmic al limbajului = " + str(max(rhythmic_indices)) + "\n")
     output_text += ("Marginea inferioară a limbajului = " + str(min(lower_rhythmic_borders)) + "\n")
     output_text += ("Marginea superioară a limbajului = " + str(max(superior_rhythmic_borders)) + "\n")
     output_text += ("Diametrul ritmic al limbajului = " + str(max(rhythmic_diameters)) + "\n")
@@ -385,10 +392,10 @@ def remove_punctuation(nested_list):
     for sublist in nested_list:
         i = 0
         while i < len(sublist):
-            if isinstance(sublist[i], list) and len(sublist[i]) == 1 and sublist[i][0] in PUNCTUATION_MARKS:
+            if isinstance(sublist[i], list) and len(sublist[i]) == 1 and (sublist[i][0] in PUNCTUATION_MARKS or sublist[i][0].isdigit()):
                 punctuation = sublist[i][0]
                 j = i + 1
-                while j < len(sublist) and isinstance(sublist[j], list) and len(sublist[j]) == 1 and sublist[j][0] in PUNCTUATION_MARKS:
+                while j < len(sublist) and isinstance(sublist[j], list) and len(sublist[j]) == 1 and (sublist[j][0] in PUNCTUATION_MARKS or sublist[j][0].isdigit()):
                     punctuation += sublist[j][0]
                     sublist[j] = []
                     j += 1
@@ -415,22 +422,23 @@ def mihai_dinu(text, choice):
     nlp = spacy.load("ro_core_news_sm")
 
     silabe, accent, len_phases, words_with_accent = syllable_split_and_accent(fragments)
-    
+
     silabe = remove_punctuation(silabe)
     words_with_accent = flatten_and_remove_empty(words_with_accent)
 
     all_phase_accent = []
-    
     for i in range(0, len(silabe)):
+
         accent_index = 0
         phase_accents = []
         for word in silabe[i]:
             word_accents = []
             for syllable in word:
 
-                if syllable not in PUNCTUATION_MARKS:
+                if syllable not in PUNCTUATION_MARKS and not syllable.isdigit():
                     word_accents.append(accent[i][accent_index])
                     accent_index += 1
+
             phase_accents.append(word_accents)
         all_phase_accent.append(phase_accents)
 
