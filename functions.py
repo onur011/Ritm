@@ -22,9 +22,9 @@ mapping_dict = {
 }
 PRON_REFLEXIV = ["mă", "te", "se", "ne", "vă"]
 VOWELS = ['a', 'ă', 'â', 'e','î', 'i', 'o', 'u', 'A', 'Ă', 'Â', 'E', 'I','Î', 'O', 'U']
-PUNCTUATION_MARKS = ['.', ',', '!', '?', ':', ';' , '-', '(', ')', '[', ']', '{', '}', "'", 
+PUNCTUATION_MARKS = ['.', ',', '!', '?', ':', ';' , '-', '—', '(', ')', '[', ']', '{', '}', "'", 
                      '"', '...', '“', '”', '/', '\\', '|', '_', '@', '#', '$', '%', '^', '&', 
-                     '*', '~', '`', '<', '>', '=','„']
+                     '*', '~', '`', '<', '>', '=','„', '•','§', '©', '®', '™', '¤', '¶', '÷', '¬', '±', 'µ']
 CONJ_SUB = ["să", "că", "dacă", "deși", "când", "cum", "ca", "pentru", "fie", "atât","încât"]
 CONSONANTS = ['ț', 'ș', 'Ț', 'Ș','b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 
               'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 
@@ -34,7 +34,6 @@ CLOSE_VOWELS = ['â', 'i', 'u', 'î']
 AUXILIAR = ['am', 'ai', 'a', 'am', 'ați','au', 'aș', 'voi', 'vei', 'va', 'vom', 'veți', 'vor' ]
 dictionary = {}
 dic = pyphen.Pyphen(lang='ro_RO')
-
 # Desparte textul in fraze
 def split_phases(text):
     phases = []
@@ -95,6 +94,7 @@ def create_dic ():
             dictionary[words[0]][words[2][0]] = [words[3].replace(".","-"), words[4]]
         else:
             dictionary[words[0]] = {words[2][0] : [words[3].replace(".","-"), words[4]]}
+create_dic()
 
 def create_dic_perc(dict):
     total_count = sum(dict.values())
@@ -310,7 +310,6 @@ def solomon_marcus(text, choice):
     if choice == 'frază':
         fragments = split_phases(text)
 
-    create_dic()
 
     global nlp
     dic
@@ -416,7 +415,6 @@ def mihai_dinu(text, choice):
     if choice == 'frază':
         fragments = split_phases(text)
 
-    create_dic()
     global nlp
 
     nlp = spacy.load("ro_core_news_sm")
@@ -428,7 +426,7 @@ def mihai_dinu(text, choice):
 
     all_phase_accent = []
     for i in range(0, len(silabe)):
-
+        
         accent_index = 0
         phase_accents = []
         for word in silabe[i]:
@@ -436,6 +434,7 @@ def mihai_dinu(text, choice):
             for syllable in word:
 
                 if syllable not in PUNCTUATION_MARKS and not syllable.isdigit():
+
                     word_accents.append(accent[i][accent_index])
                     accent_index += 1
 
